@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tippelde</title>
+<meta name="description" content="Fermi-becslő játék: 200 kérdés, 25 szint. Tippelj nagyságrendre, és ne lépj túl messze a valós értéktől.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#e8f0e9">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+  <header class="bar">
+    <div class="hud" id="hud" hidden>
+      <div class="cell"><span>Szint</span><b><i id="hud-level">1</i><small> / 25</small></b></div>
+      <div class="cell"><span>Visszalépés</span><b id="hud-back">0</b></div>
+      <button class="btn small" id="btn-restart" type="button">Újrakezdés</button>
+      <button class="btn small" id="btn-home" type="button">Főmenü</button>
+    </div>
+  </header>
+
+  <noscript><p class="sheet">A játékhoz JavaScript szükséges.</p></noscript>
+
+  <main>
+  <!-- KEZDŐKÉPERNYŐ -->
+  <section id="screen-start" class="stack">
+    <div class="sheet hero">
+      <h1>Tippelde</h1>
+      <ul class="calc" aria-label="Fermi-becslés példa">
+      </ul>
+
+      <fieldset class="modes">
+        <legend>Játékmód</legend>
+        <div class="mode-list">
+          <label class="mode">
+            <input type="radio" name="mode" value="classic" checked>
+            <span class="mode-body"><b>Klasszikus</b><span id="mode-desc-classic"></span></span>
+          </label>
+          <label class="mode">
+            <input type="radio" name="mode" value="acc">
+            <span class="mode-body"><b>Összesített eltérés</b><span id="mode-desc-acc"></span></span>
+          </label>
+        </div>
+      </fieldset>
+
+      <dl class="rules">
+        <div><dt>Továbbjutás</dt><dd id="rule-pass"></dd></div>
+        <div><dt>Hibahatár</dt><dd id="rule-fail"></dd></div>
+        <div><dt>Cél</dt><dd>Juss át mind a 25 szinten és szerezd meg ingyen a GTA 6-ot!!!!! Minél kevesebb tippből sikerül, annál jobb az eredményed.</dd></div>
+      </dl>
+      <div class="cta">
+        <button class="btn primary" id="btn-start" type="button">Játék indítása</button>
+        <p class="best" id="best-line" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- JÁTÉK -->
+  <section id="screen-game" class="play" hidden>
+    <aside><ol class="ladder" id="ladder" aria-label="Szintek"></ol></aside>
+    <div class="sheet">
+      <div class="titleblock">
+        <div><span>Látott kérdés</span><b id="tb-seen">1 / 200</b></div>
+        <div><span>Megengedett eltérés</span><b id="tb-tol">×10</b></div>
+      </div>
+
+      <!-- csak az „Összesített eltérés” módban látszik -->
+      <div class="accbar" id="accbar" hidden>
+        <div class="accbar-head"><span>Összesített eltérés</span><b id="acc-val">×1 / ×20</b></div>
+        <div class="accbar-track" id="acc-track" role="progressbar" aria-label="Összesített eltérés" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i class="accbar-fill" id="acc-fill"></i></div>
+        <p class="accbar-note" id="acc-note"></p>
+      </div>
+
+      <h2 class="q" id="q-text" tabindex="-1"></h2>
+
+      <div id="ask">
+        <form id="guess-form" autocomplete="off" novalidate>
+          <label class="sr-only" for="guess">A tipped</label>
+          <div class="field">
+            <input id="guess" type="text" inputmode="decimal" autocapitalize="off" spellcheck="false" placeholder="Írd be a tipped" aria-describedby="preview range-note">
+            <span class="unit" id="q-unit"></span>
+          </div>
+          <p class="preview" id="preview" aria-live="polite"></p>
+          <div class="chips" id="chips">
+            <button class="btn small" type="button" data-w="ezer" aria-label="Szorzó: ezer">× ezer</button>
+            <button class="btn small" type="button" data-w="millió" aria-label="Szorzó: millió">× millió</button>
+            <button class="btn small" type="button" data-w="milliárd" aria-label="Szorzó: milliárd">× milliárd</button>
+            <button class="btn small" type="button" data-w="billió" aria-label="Szorzó: billió">× billió</button>
+          </div>
+          <p class="range-note" id="range-note"></p>
+          <button class="btn primary" type="submit">Tippelek</button>
+        </form>
+      </div>
+
+      <div id="result" aria-live="polite" hidden></div>
+    </div>
+  </section>
+
+  <!-- GYŐZELEM -->
+  <section id="screen-win" class="stack win" hidden>
+    <div class="sheet">
+      <h2 id="win-title" tabindex="-1">Végigértél a 25 szinten.</h2>
+      <p class="lead">Fokozatod: <strong id="win-rank"></strong>. <span id="win-note"></span></p>
+      <dl class="stats">
+        <div><dt>Tipp</dt><dd id="win-tips">0</dd></div>
+        <div><dt>Visszalépés</dt><dd id="win-back">0</dd></div>
+        <div><dt>Átlagos eltérés</dt><dd id="win-avg">×1</dd></div>
+      </dl>
+      <a class="btng" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">NYOMJ IDE AZ INGYEN GTA 6 AKTIVÁLÓ KÓDÉRT!!!!!!!!!!!!!!!!</a>
+      <div class="actions">
+        <button class="btn primary" id="btn-again" type="button">Új játék</button>
+        <button class="btn" id="btn-menu" type="button">Játékmód váltása</button>
+        <button class="btn" id="btn-copy" type="button">Eredmény másolása</button>
+      </div>
+    </div>
+  </section>
+  </main>
+
+  <p class="foot">A válaszok forrásokból összevetett, kerekített értékek. A cél a nagyságrend eltalálása, nem a pontos szám.</p>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="javascript.js"></script>
+</body>
+</html>
